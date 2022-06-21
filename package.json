@@ -71,6 +71,7 @@
         "@babel/register": "^7.16.5",
         "@babel/runtime": "^7.16.5",
         "@emotion/babel-plugin": "^11.7.1",
+        "axios": "^0.27.2",
         "babel-core": "7.0.0-bridge.0",
         "babel-eslint": "10.1.0",
         "babel-jest": "^27.4.5",
@@ -87,6 +88,7 @@
         "dotenv": "^10.0.0",
         "express": "^4.17.2",
         "history": "^4.10.1",
+        "nanoid": "^4.0.0",
         "prop-types": "^15.7.2",
         "react": "^17.0.2",
         "react-dom": "^17.0.2",
@@ -130,7 +132,7 @@
         "jest-cli": "^27.4.5",
         "mini-css-extract-plugin": "^2.4.5",
         "node-hot-loader": "^1.21.5",
-        "node-sass": "^6.0.1",
+        "node-sass": "^7.0.1",
         "nodemon": "^2.0.15",
         "postcss": "^8.4.5",
         "postcss-import": "^14.0.2",
@@ -154,7 +156,8 @@
     },
     "nodemonConfig": {
         "ignore": [
-            "*.hot-update.json"
+            "*.hot-update.json",
+            "./server/data/task1.json"
         ]
     }
 }
