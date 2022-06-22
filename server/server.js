@@ -33,7 +33,7 @@ const server = express()
 const taskTemplate = {
   taskId: 'id',
   title: 'title',
-  status: 'new',
+  status: 'NEW',
   _isDeleted: false,
   _createdAt: null,
   _deletedAt: null
@@ -52,7 +52,19 @@ middleware.forEach((it) => server.use(it))
 server.get('/api/v1/tasks/:category', async (req, res) => {
   const { category } = req.params
   const tasks = await readFile(`${__dirname}/data/${category}.json`, { encoding: 'utf8' })
-    .then((text) => JSON.parse(text))
+    .then((text) => {
+      const del = '_isDeleted'
+      return JSON.parse(text)
+      .filter((task) => !task[del])
+      .map((filteredTask) => {
+        return Object.keys(filteredTask).reduce((acc, rec) => {
+          if (rec[0] !== '_') {
+            return { ...acc, [rec]: filteredTask[rec] }
+          }
+          return acc
+        }, {})
+      })
+    })
     .catch(() => [])
   res.json(tasks)
 })
@@ -62,6 +74,7 @@ server.post('/api/v1/tasks/:category', async (req, res) => {
   const taskData = req.body.body.text
   const newTask = {
     ...taskTemplate,
+    taskId: 'id',
     title: taskData,
     _createdAt: +new Date()
   }
@@ -76,6 +89,25 @@ server.post('/api/v1/tasks/:category', async (req, res) => {
       writeFile(`${__dirname}/data/${category}.json`, JSON.stringify([newTask]), {
         encoding: 'utf8'
       })
+    })
+  res.json({ statuts: 'TASKS UPDATED' })
+})
+
+server.patch('/api/v1/tasks/:category/:id', async (req, res) => {
+  const { category, id } = req.params
+  const taskData = req.body.body.status
+  await readFile(`${__dirname}/data/${category}.json`, { encoding: 'utf8' })
+    .then((text) => {
+      const st = "status"
+      const tasksOut = JSON.parse(text)
+      const newTasks = tasksOut.map((item) => (item.title === `${id}`) ? {...item, [st]: taskData} : item)
+      writeFile(`${__dirname}/data/${category}.json`, JSON.stringify(newTasks), {
+        encoding: 'utf8'
+      })
+    })
+    .catch((err) => {
+      console.log(err)
+
     })
   res.json({ statuts: 'TASKS UPDATED' })
 })

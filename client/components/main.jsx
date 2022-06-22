@@ -22,6 +22,7 @@ return (
           if (event.key === 'Enter') {
             dispatch(addTasks(event.target.value))
             event.target.value = ""
+            dispatch(getTasks())
           }
         }}
       />

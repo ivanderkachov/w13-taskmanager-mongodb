@@ -1,13 +1,14 @@
 import axios from 'axios'
 
 const GET_TASKS = 'GET_TASKS'
-const ADD_TASKS = 'ADD_TASKS'
+
 
 
 
 const initialState = {
   tasks: [],
-  titles: []
+  titles: [],
+  status: []
 }
 
 export default (state = initialState, action) => {
@@ -16,12 +17,6 @@ export default (state = initialState, action) => {
       return {
         ...state,
         tasks: action.tasks
-      }
-    }
-    case ADD_TASKS: {
-      return {
-        ...state,
-        titles: action.titles
       }
     }
     default:
@@ -53,9 +48,37 @@ export function addTasks(title) {
         text: title
       }
     })
-    dispatch({
-      type: ADD_TASKS,
-      titles: title
+    axios('/api/v1/tasks/task1').then(({ data }) => {
+      const arrTasks = data.reduce((acc, task) => {
+        return {...acc, [task.title]:task }
+      }, {})
+          dispatch({
+            type: GET_TASKS,
+            tasks: arrTasks
+          })
     })
+
   }
+  }
+  export function changeStatus(taskNum, newstatus) {
+    return (dispatch) => {
+      axios.patch(`/api/v1/tasks/task1/${taskNum}`, {
+        method: 'POST',
+        headers: {
+          'Content-type': 'application/json'
+        },
+        body: {
+          status: newstatus
+        }
+      })
+    axios('/api/v1/tasks/task1').then(({ data }) => {
+      const arrTasks = data.reduce((acc, task) => {
+        return { ...acc, [task.title]: task }
+      }, {})
+      dispatch({
+        type: GET_TASKS,
+        tasks: arrTasks
+      })
+    })
+    }
   }
