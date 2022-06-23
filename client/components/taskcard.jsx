@@ -1,7 +1,7 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
 
-import { changeStatus } from '../redux/reducers/tasks'
+import { changeStatus, deleteTask} from '../redux/reducers/tasks'
 
 
 
@@ -51,6 +51,7 @@ const Taskcard = ({ t }) => {
                 className="border shadow-lg rounded font-bold p-2"
                 onClick={(e) => {
                   dispatch(changeStatus(t.title, e.target.textContent))
+                  dispatch(deleteTask(t.title))
                 }}
               >
                 {DONE}

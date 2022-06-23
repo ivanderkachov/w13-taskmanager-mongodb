@@ -82,3 +82,17 @@ export function addTasks(title) {
     })
     }
   }
+export function deleteTask(taskNum) {
+  return (dispatch) => {
+    axios.delete(`/api/v1/tasks/task1/${taskNum}`)
+    axios.get('/api/v1/tasks/task1').then(({ data }) => {
+      const arrTasks = data.reduce((acc, task) => {
+        return { ...acc, [task.title]: task }
+      }, {})
+      dispatch({
+        type: GET_TASKS,
+        tasks: arrTasks
+      })
+    })
+  }
+}

@@ -39,6 +39,8 @@ const taskTemplate = {
   _deletedAt: null
 }
 
+const statusList = ['NEW', 'IN_PROGRESS', 'BLOCKED', 'DONE']
+
 const middleware = [
   cors(),
   express.static(path.resolve(__dirname, '../dist/assets')),
@@ -96,21 +98,48 @@ server.post('/api/v1/tasks/:category', async (req, res) => {
 server.patch('/api/v1/tasks/:category/:id', async (req, res) => {
   const { category, id } = req.params
   const taskData = req.body.body.status
-  await readFile(`${__dirname}/data/${category}.json`, { encoding: 'utf8' })
-    .then((text) => {
-      const st = "status"
-      const tasksOut = JSON.parse(text)
-      const newTasks = tasksOut.map((item) => (item.title === `${id}`) ? {...item, [st]: taskData} : item)
-      writeFile(`${__dirname}/data/${category}.json`, JSON.stringify(newTasks), {
-        encoding: 'utf8'
-      })
-    })
-    .catch((err) => {
-      console.log(err)
+  if (statusList.includes(taskData)) {
+      await readFile(`${__dirname}/data/${category}.json`, { encoding: 'utf8' })
+        .then((text) => {
+          const st = 'status'
+          const tasksOut = JSON.parse(text)
+          const newTasks = tasksOut.map((item) =>
+            item.title === `${id}` ? { ...item, [st]: taskData } : item
+          )
+          writeFile(`${__dirname}/data/${category}.json`, JSON.stringify(newTasks), {
+            encoding: 'utf8'
+          })
+        })
+        .catch((err) => {
+          console.log(err)
+        })
+  } else {
+    res.status(501).json({"status": "error", "message": "incorrect status"})
+  }
 
-    })
   res.json({ statuts: 'TASKS UPDATED' })
 })
+
+server.delete('/api/v1/tasks/:category/:id', async (req, res) => {
+  const { category, id } = req.params
+    await readFile(`${__dirname}/data/${category}.json`, { encoding: 'utf8' })
+      .then((text) => {
+        const delTask = "_isDeleted"
+        const tasksOut = JSON.parse(text)
+        const newTasks = tasksOut.map((item) =>
+          item.title === `${id}` ? { ...item, [delTask]: true } : item
+        )
+        writeFile(`${__dirname}/data/${category}.json`, JSON.stringify(newTasks), {
+          encoding: 'utf8'
+        })
+      })
+      .catch((err) => {
+        console.log(err)
+      })
+
+  res.json({ statuts: 'TASKS UPDATED' })
+  })
+
 
 server.use('/api/', (req, res) => {
   res.status(404)
