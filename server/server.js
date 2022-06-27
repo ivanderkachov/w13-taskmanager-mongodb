@@ -125,9 +125,10 @@ server.delete('/api/v1/tasks/:category/:id', async (req, res) => {
     await readFile(`${__dirname}/data/${category}.json`, { encoding: 'utf8' })
       .then((text) => {
         const delTask = "_isDeleted"
+        const delAt = '_deletedAt'
         const tasksOut = JSON.parse(text)
         const newTasks = tasksOut.map((item) =>
-          item.title === `${id}` ? { ...item, [delTask]: true } : item
+          item.title === `${id}` ? { ...item, [delTask]: true, [delAt]: +new Date() } : item
         )
         writeFile(`${__dirname}/data/${category}.json`, JSON.stringify(newTasks), {
           encoding: 'utf8'
