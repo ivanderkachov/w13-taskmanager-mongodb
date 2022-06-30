@@ -2,13 +2,8 @@ import axios from 'axios'
 
 const GET_TASKS = 'GET_TASKS'
 
-
-
-
 const initialState = {
-  tasks: [],
-  titles: [],
-  status: []
+  tasks: []
 }
 
 export default (state = initialState, action) => {
@@ -28,7 +23,7 @@ export function getTasks() {
   return (dispatch) => {
     return axios('/api/v1/tasks/task1').then(({ data }) => {
       const arrTasks = data.reduce((acc, task) => {
-        return {...acc, [task.title]:task }
+        return { ...acc, [task.title]: task }
       }, {})
       dispatch({
         type: GET_TASKS,
@@ -38,31 +33,33 @@ export function getTasks() {
   }
 }
 export function addTasks(title) {
-  return (dispatch) => {
-    axios.post('/api/v1/tasks/task1', {
-      method: 'POST',
-      headers: {
-        'Content-type': 'application/json'
-      },
-      body: {
-        text: title
-      }
-    })
-    axios('/api/v1/tasks/task1').then(({ data }) => {
-      const arrTasks = data.reduce((acc, task) => {
-        return {...acc, [task.title]:task }
-      }, {})
-          dispatch({
-            type: GET_TASKS,
-            tasks: arrTasks
-          })
-    })
-
+  return (dispatch, getState) => {
+    const store = getState().tasks.tasks
+    axios
+      .post('/api/v1/tasks/task1', {
+        method: 'POST',
+        headers: {
+          'Content-type': 'application/json'
+        },
+        body: {
+          text: title
+        }
+      })
+      .then(({ data }) => {
+        const arrTasks = { ...store, [store.title]: data }
+        dispatch({
+          type: GET_TASKS,
+          tasks: arrTasks
+        })
+      })
   }
-  }
-  export function changeStatus(taskNum, newstatus) {
-    return (dispatch) => {
-      axios.patch(`/api/v1/tasks/task1/${taskNum}`, {
+}
+export function changeStatus(taskNum, newstatus) {
+  return (dispatch, getState) => {
+    const store = getState().tasks.tasks
+    const arrTasks = { ...store, [taskNum]: { ...store[taskNum], newstatus } }
+    axios
+      .patch(`/api/v1/tasks/task1/${taskNum}`, {
         method: 'POST',
         headers: {
           'Content-type': 'application/json'
@@ -71,24 +68,21 @@ export function addTasks(title) {
           status: newstatus
         }
       })
-    axios('/api/v1/tasks/task1').then(({ data }) => {
-      const arrTasks = data.reduce((acc, task) => {
-        return { ...acc, [task.title]: task }
-      }, {})
-      dispatch({
-        type: GET_TASKS,
-        tasks: arrTasks
+      .then(() => {
+        dispatch({
+          type: GET_TASKS,
+          tasks: arrTasks
+        })
       })
-    })
-    }
   }
+}
+
 export function deleteTask(taskNum) {
-  return (dispatch) => {
+  return (dispatch, getState) => {
+    const store = getState().tasks.tasks
+    const arrTasks = delete store.taskNum
     axios.delete(`/api/v1/tasks/task1/${taskNum}`)
-    axios.get('/api/v1/tasks/task1').then(({ data }) => {
-      const arrTasks = data.reduce((acc, task) => {
-        return { ...acc, [task.title]: task }
-      }, {})
+    .then(() => {
       dispatch({
         type: GET_TASKS,
         tasks: arrTasks

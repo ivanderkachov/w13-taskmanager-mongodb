@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { getTasks, addTasks } from '../redux/reducers/tasks'
@@ -10,7 +10,9 @@ const Main = () => {
 
   useEffect(() => {
     dispatch(getTasks())
-  }, [])
+  }, [task])
+
+  const [newTask, setNewTask] = useState('')
 
 return (
   <div className="flex flex-col justify-between">
@@ -18,14 +20,26 @@ return (
       <input
         className="border"
         type="text"
-        onKeyDown={(event) => {
+        value = {newTask}
+        onChange={(e) => setNewTask(e.target.value)}
+        /*      onKeyDown={(event) => {
           if (event.key === 'Enter') {
             dispatch(addTasks(event.target.value))
             event.target.value = ""
             dispatch(getTasks())
           }
-        }}
+        }} */
       />
+      <button
+        type="button"
+        className="border shadow-lg rounded font-bold p-2"
+        onClick={() => {
+          dispatch(addTasks(newTask))
+          setNewTask('')
+        }}
+      >
+        Add
+      </button>
     </div>
     <div>
       {Object.entries(task).map((t) => {

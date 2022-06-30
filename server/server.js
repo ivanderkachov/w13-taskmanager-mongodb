@@ -92,7 +92,14 @@ server.post('/api/v1/tasks/:category', async (req, res) => {
         encoding: 'utf8'
       })
     })
-  res.json({ statuts: 'TASKS UPDATED' })
+  res.json(
+    Object.keys(newTask).reduce((acc, rec) => {
+      if (rec[0] !== '_') {
+        return { ...acc, [rec]: newTask[rec] }
+      }
+      return acc
+    }, {})
+  )
 })
 
 server.patch('/api/v1/tasks/:category/:id', async (req, res) => {
