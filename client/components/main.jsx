@@ -10,7 +10,7 @@ const Main = () => {
 
   useEffect(() => {
     dispatch(getTasks())
-  }, [task])
+  }, [])
 
   const [newTask, setNewTask] = useState('')
 
