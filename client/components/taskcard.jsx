@@ -1,13 +1,15 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useDispatch } from 'react-redux'
 
-import { changeStatus, deleteTask} from '../redux/reducers/tasks'
+import { changeStatus, deleteTask, renameTasks } from '../redux/reducers/tasks'
 
 
 
 const Taskcard = ({ t }) => {
 
   const dispatch = useDispatch()
+  const [buttonEdit, setButtonEdit] = useState('untoggled')
+  const [newTaskName, setTaskName] = useState('')
 
 
   const NEW = 'NEW'
@@ -25,7 +27,7 @@ const Taskcard = ({ t }) => {
                   type="button"
                   className="border shadow-lg rounded font-bold p-2 "
                   onClick={(e) => {
-                    dispatch(changeStatus(t.title,e.target.textContent))
+                    dispatch(changeStatus(t.taskId,e.target.textContent))
                   }}
                 >
                   {IN_PROGRESS}
@@ -41,7 +43,7 @@ const Taskcard = ({ t }) => {
                 type="button"
                 className="border shadow-lg rounded font-bold p-2"
                 onClick={(e) => {
-                  dispatch(changeStatus(t.title, e.target.textContent))
+                  dispatch(changeStatus(t.taskId, e.target.textContent))
                 }}
               >
                 {BLOCKED}
@@ -50,8 +52,8 @@ const Taskcard = ({ t }) => {
                 type="button"
                 className="border shadow-lg rounded font-bold p-2"
                 onClick={(e) => {
-                  dispatch(changeStatus(t.title, e.target.textContent))
-                  dispatch(deleteTask(t.title))
+                  dispatch(changeStatus(t.taskId, e.target.textContent))
+                  dispatch(deleteTask(t.taskId))
                 }}
               >
                 {DONE}
@@ -67,7 +69,7 @@ const Taskcard = ({ t }) => {
                   type="button"
                   className="border shadow-lg rounded font-bold p-2"
                   onClick={(e) => {
-                    dispatch(changeStatus(t.title, e.target.textContent))
+                    dispatch(changeStatus(t.taskId, e.target.textContent))
                   }}
                 >
                   {IN_PROGRESS}
@@ -84,6 +86,41 @@ const Taskcard = ({ t }) => {
 
   return (
     <div className="task flex flex-col justify-between bg-indigo-80 font-bold text-black rounded-lg border shadow-lg p-10 h-64 w-64">
+
+
+      {buttonEdit === 'untoggled' &&
+      <div className="task__title">
+      {t.title}
+      <button
+      type = "button"
+      className="border shadow-lg rounded font-bold p-2"
+      onClick = {()=>setButtonEdit('toggled')}
+      >
+        Edit
+      </button>
+      </div>}
+      {buttonEdit === 'toggled' &&
+      <div>
+      <input
+      className="border"
+      type = "text"
+      value = {newTaskName}
+      onChange = {(e) => {setTaskName(e.target.value)}}
+      />
+      <button
+      type = "button"
+      className="border shadow-lg rounded font-bold p-2"
+      onClick = {()=>{
+        setButtonEdit('untoggled')
+        dispatch(renameTasks(t.taskId, newTaskName))
+        setTaskName('')
+      }}
+      >
+        Save
+      </button>
+      </div>}
+
+
       <div className="task__title"> {t.title} </div>
       <div className="task__id">{t.taskId}</div>
       <div className="task__status">{t.status}</div>

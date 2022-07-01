@@ -23,7 +23,7 @@ export function getTasks() {
   return (dispatch) => {
     return axios('/api/v1/tasks/task1').then(({ data }) => {
       const arrTasks = data.reduce((acc, task) => {
-        return { ...acc, [task.title]: task }
+        return { ...acc, [task.taskId]: task }
       }, {})
       dispatch({
         type: GET_TASKS,
@@ -46,7 +46,7 @@ export function addTasks(title) {
         }
       })
       .then(({ data }) => {
-        const arrTasks = { ...store, [store.title]: data }
+        const arrTasks = { ...store, [data.taskId]: data }
         dispatch({
           type: GET_TASKS,
           tasks: arrTasks
@@ -54,12 +54,12 @@ export function addTasks(title) {
       })
   }
 }
-export function changeStatus(taskNum, newstatus) {
+export function changeStatus(taskId, newstatus) {
   return (dispatch, getState) => {
     const store = getState().tasks.tasks
-    const arrTasks = { ...store, [taskNum]: { ...store[taskNum], newstatus } }
+    const arrTasks = { ...store, [taskId]: { ...store[taskId], newstatus } }
     axios
-      .patch(`/api/v1/tasks/task1/${taskNum}`, {
+      .patch(`/api/v1/tasks/task1/${taskId}`, {
         method: 'POST',
         headers: {
           'Content-type': 'application/json'
@@ -77,16 +77,40 @@ export function changeStatus(taskNum, newstatus) {
   }
 }
 
-export function deleteTask(taskNum) {
+export function deleteTask(taskId) {
   return (dispatch, getState) => {
     const store = getState().tasks.tasks
     const arrTasks = delete store.taskNum
-    axios.delete(`/api/v1/tasks/task1/${taskNum}`)
+    axios.delete(`/api/v1/tasks/task1/${taskId}`)
     .then(() => {
       dispatch({
         type: GET_TASKS,
         tasks: arrTasks
       })
     })
+  }
+}
+
+export function renameTasks(taskId,newTaskName) {
+  return (dispatch, getState) => {
+    const store = getState().tasks.tasks
+    const arrTasks = { ...store, [taskId]: { ...store[taskId], newTaskName } }
+    axios
+      .patch(`/api/v1/tasks/task1`, {
+        method: 'POST',
+        headers: {
+          'Content-type': 'application/json'
+        },
+        body: {
+          id: taskId,
+          title: newTaskName
+        }
+      })
+      .then(() => {
+        dispatch({
+          type: GET_TASKS,
+          tasks: arrTasks
+        })
+      })
   }
 }

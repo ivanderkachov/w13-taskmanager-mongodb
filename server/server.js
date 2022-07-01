@@ -76,7 +76,7 @@ server.post('/api/v1/tasks/:category', async (req, res) => {
   const taskData = req.body.body.text
   const newTask = {
     ...taskTemplate,
-    taskId: 'id',
+    taskId: `id${+new Date()}`,
     title: taskData,
     _createdAt: +new Date()
   }
@@ -111,7 +111,7 @@ server.patch('/api/v1/tasks/:category/:id', async (req, res) => {
           const st = 'status'
           const tasksOut = JSON.parse(text)
           const newTasks = tasksOut.map((item) =>
-            item.title === `${id}` ? { ...item, [st]: taskData } : item
+            item.taskId === `${id}` ? { ...item, [st]: taskData } : item
           )
           writeFile(`${__dirname}/data/${category}.json`, JSON.stringify(newTasks), {
             encoding: 'utf8'
@@ -127,6 +127,27 @@ server.patch('/api/v1/tasks/:category/:id', async (req, res) => {
   res.json({ statuts: 'TASKS UPDATED' })
 })
 
+server.patch('/api/v1/tasks/:category', async (req, res) => {
+  const { category } = req.params
+  const taskDataId = req.body.body.id
+  const taskDataTitle = req.body.body.title
+    await readFile(`${__dirname}/data/${category}.json`, { encoding: 'utf8' })
+      .then((text) => {
+        const st = 'title'
+        const tasksOut = JSON.parse(text)
+        const newTasks = tasksOut.map((item) =>
+          item.taskId === `${taskDataId}` ? { ...item, [st]: taskDataTitle } : item
+        )
+        writeFile(`${__dirname}/data/${category}.json`, JSON.stringify(newTasks), {
+          encoding: 'utf8'
+        })
+      })
+      .catch((err) => {
+        console.log(err)
+      })
+  res.json({ statuts: 'TASKS UPDATED' })
+})
+
 server.delete('/api/v1/tasks/:category/:id', async (req, res) => {
   const { category, id } = req.params
     await readFile(`${__dirname}/data/${category}.json`, { encoding: 'utf8' })
@@ -135,7 +156,7 @@ server.delete('/api/v1/tasks/:category/:id', async (req, res) => {
         const delAt = '_deletedAt'
         const tasksOut = JSON.parse(text)
         const newTasks = tasksOut.map((item) =>
-          item.title === `${id}` ? { ...item, [delTask]: true, [delAt]: +new Date() } : item
+          item.taskId === `${id}` ? { ...item, [delTask]: true, [delAt]: +new Date() } : item
         )
         writeFile(`${__dirname}/data/${category}.json`, JSON.stringify(newTasks), {
           encoding: 'utf8'
