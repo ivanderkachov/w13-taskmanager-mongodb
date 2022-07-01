@@ -9,7 +9,7 @@ const Taskcard = ({ t }) => {
 
   const dispatch = useDispatch()
   const [buttonEdit, setButtonEdit] = useState('untoggled')
-  const [newTaskName, setTaskName] = useState('')
+  const [newTaskName, setTaskName] = useState(t.title)
 
 
   const NEW = 'NEW'
@@ -94,7 +94,10 @@ const Taskcard = ({ t }) => {
       <button
       type = "button"
       className="border shadow-lg rounded font-bold p-2"
-      onClick = {()=>setButtonEdit('toggled')}
+      onClick = {()=>{
+        setButtonEdit('toggled')
+        setTaskName(t.title)
+      }}
       >
         Edit
       </button>
@@ -121,7 +124,6 @@ const Taskcard = ({ t }) => {
       </div>}
 
 
-      <div className="task__title"> {t.title} </div>
       <div className="task__id">{t.taskId}</div>
       <div className="task__status">{t.status}</div>
       <div>{buttonName(t.status)}</div>
