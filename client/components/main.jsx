@@ -34,8 +34,11 @@ return (
         type="button"
         className="border shadow-lg rounded font-bold p-2"
         onClick={() => {
+          if (newTask.trim() !== '') {
           dispatch(addTasks(newTask))
           setNewTask('')
+          }
+
         }}
       >
         Add
