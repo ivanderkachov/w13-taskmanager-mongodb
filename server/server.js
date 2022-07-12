@@ -6,6 +6,10 @@ import sockjs from 'sockjs'
 import { renderToStaticNodeStream } from 'react-dom/server'
 import React from 'react'
 
+const mongoose = require('mongoose')
+
+import mongooseService from './services/mongoose'
+
 
 import cookieParser from 'cookie-parser'
 import config from './config'
@@ -30,6 +34,30 @@ let connections = []
 const port = process.env.PORT || 8090
 const server = express()
 
+const mongoUrl =
+  'mongodb+srv://ivanderkachov:63441257I@cluster0.uwzfx.mongodb.net/Tasks'
+
+mongooseService.connect(mongoUrl)
+
+const taskSchema = new mongoose.Schema({
+  category: String,
+  taskId: String,
+  title: {
+    type: String,
+    required: true
+  },
+  status: String,
+  _isDeleted: Boolean,
+  _createdAt: Number,
+  _deletedAt: Number
+}, {
+  timestamps: true
+})
+
+const Task = mongoose.model('tasklist', taskSchema)
+
+
+
 const taskTemplate = {
   taskId: 'id',
   title: 'title',
@@ -52,23 +80,37 @@ const middleware = [
 middleware.forEach((it) => server.use(it))
 
 server.get('/api/v1/tasks/:category', async (req, res) => {
-  const { category } = req.params
-  const tasks = await readFile(`${__dirname}/data/${category}.json`, { encoding: 'utf8' })
-    .then((text) => {
-      const del = '_isDeleted'
-      return JSON.parse(text)
-      .filter((task) => !task[del])
-      .map((filteredTask) => {
-        return Object.keys(filteredTask).reduce((acc, rec) => {
-          if (rec[0] !== '_') {
-            return { ...acc, [rec]: filteredTask[rec] }
-          }
-          return acc
-        }, {})
-      })
-    })
-    .catch(() => [])
-  res.json(tasks)
+  // const { category } = req.params
+  // const tasks = await readFile(`${__dirname}/data/${category}.json`, { encoding: 'utf8' })
+  //   .then((text) => {
+  //     const del = '_isDeleted'
+  //     return JSON.parse(text)
+  //     .filter((task) => !task[del])
+  //     .map((filteredTask) => {
+  //       return Object.keys(filteredTask).reduce((acc, rec) => {
+  //         if (rec[0] !== '_') {
+  //           return { ...acc, [rec]: filteredTask[rec] }
+  //         }
+  //         return acc
+  //       }, {})
+  //     })
+  //   })
+  //   .catch(() => [])
+  try {
+    const data = await Task.find({_isDeleted: {$ne: true}})
+      res.json(
+        data.map((filteredTask) => {
+          return Object.keys(filteredTask._doc).reduce((acc, rec) => {
+            if (rec[0] !== '_') {
+              return { ...acc, [rec]: filteredTask[rec] }
+            }
+            return acc
+          }, {})
+        })
+      )
+  } catch (err) {
+    console.log(err)
+  }
 })
 
 server.post('/api/v1/tasks/:category', async (req, res) => {
@@ -80,46 +122,67 @@ server.post('/api/v1/tasks/:category', async (req, res) => {
     title: taskData,
     _createdAt: +new Date()
   }
-   await readFile(`${__dirname}/data/${category}.json`, { encoding: 'utf8' })
-    .then((text) => {
-      const tasksOut = JSON.parse(text)
-      writeFile(`${__dirname}/data/${category}.json`, JSON.stringify([...tasksOut, newTask]), {
-        encoding: 'utf8'
-      })
-    })
-    .catch(() => {
-      writeFile(`${__dirname}/data/${category}.json`, JSON.stringify([newTask]), {
-        encoding: 'utf8'
-      })
-    })
-  res.json(
-    Object.keys(newTask).reduce((acc, rec) => {
-      if (rec[0] !== '_') {
-        return { ...acc, [rec]: newTask[rec] }
-      }
-      return acc
-    }, {})
-  )
+
+  try {
+    const taskObj = new Task({...newTask})
+    taskObj.save()
+      res.json(
+        Object.keys(newTask).reduce((acc, rec) => {
+          if (rec[0] !== '_') {
+            return { ...acc, [rec]: newTask[rec] }
+          }
+          return acc
+        }, {})
+      )
+  } catch (err) {
+    console.log(err)
+  }
+
+  //  await readFile(`${__dirname}/data/${category}.json`, { encoding: 'utf8' })
+  //   .then((text) => {
+  //     const tasksOut = JSON.parse(text)
+  //     writeFile(`${__dirname}/data/${category}.json`, JSON.stringify([...tasksOut, newTask]), {
+  //       encoding: 'utf8'
+  //     })
+  //   })
+  //   .catch(() => {
+  //     writeFile(`${__dirname}/data/${category}.json`, JSON.stringify([newTask]), {
+  //       encoding: 'utf8'
+  //     })
+  //   })
+  // res.json(
+  //   Object.keys(newTask).reduce((acc, rec) => {
+  //     if (rec[0] !== '_') {
+  //       return { ...acc, [rec]: newTask[rec] }
+  //     }
+  //     return acc
+  //   }, {})
+  // )
 })
 
 server.patch('/api/v1/tasks/:category/:id', async (req, res) => {
   const { category, id } = req.params
   const taskData = req.body.body.status
   if (statusList.includes(taskData)) {
-      await readFile(`${__dirname}/data/${category}.json`, { encoding: 'utf8' })
-        .then((text) => {
-          const st = 'status'
-          const tasksOut = JSON.parse(text)
-          const newTasks = tasksOut.map((item) =>
-            item.taskId === `${id}` ? { ...item, [st]: taskData } : item
-          )
-          writeFile(`${__dirname}/data/${category}.json`, JSON.stringify(newTasks), {
-            encoding: 'utf8'
-          })
-        })
-        .catch((err) => {
-          console.log(err)
-        })
+    try {
+      await Task.findOneAndUpdate({taskId: {$eq: id}},{$set: {status: taskData}})
+    } catch (err) {
+      console.log(err)
+    }
+      // await readFile(`${__dirname}/data/${category}.json`, { encoding: 'utf8' })
+      //   .then((text) => {
+      //     const st = 'status'
+      //     const tasksOut = JSON.parse(text)
+      //     const newTasks = tasksOut.map((item) =>
+      //       item.taskId === `${id}` ? { ...item, [st]: taskData } : item
+      //     )
+      //     writeFile(`${__dirname}/data/${category}.json`, JSON.stringify(newTasks), {
+      //       encoding: 'utf8'
+      //     })
+      //   })
+      //   .catch((err) => {
+      //     console.log(err)
+      //   })
   } else {
     res.status(501).json({"status": "error", "message": "incorrect status"})
   }
@@ -131,40 +194,51 @@ server.patch('/api/v1/tasks/:category', async (req, res) => {
   const { category } = req.params
   const taskDataId = req.body.body.id
   const taskDataTitle = req.body.body.title
-    await readFile(`${__dirname}/data/${category}.json`, { encoding: 'utf8' })
-      .then((text) => {
-        const st = 'title'
-        const tasksOut = JSON.parse(text)
-        const newTasks = tasksOut.map((item) =>
-          item.taskId === `${taskDataId}` ? { ...item, [st]: taskDataTitle } : item
-        )
-        writeFile(`${__dirname}/data/${category}.json`, JSON.stringify(newTasks), {
-          encoding: 'utf8'
-        })
-      })
-      .catch((err) => {
-        console.log(err)
-      })
+  try {
+    await Task.findOneAndUpdate({ taskId: { $eq: taskDataId } }, { $set: { title: taskDataTitle } })
+  } catch (err) {
+    console.log(err)
+  }
+
+    // await readFile(`${__dirname}/data/${category}.json`, { encoding: 'utf8' })
+    //   .then((text) => {
+    //     const st = 'title'
+    //     const tasksOut = JSON.parse(text)
+    //     const newTasks = tasksOut.map((item) =>
+    //       item.taskId === `${taskDataId}` ? { ...item, [st]: taskDataTitle } : item
+    //     )
+    //     writeFile(`${__dirname}/data/${category}.json`, JSON.stringify(newTasks), {
+    //       encoding: 'utf8'
+    //     })
+    //   })
+    //   .catch((err) => {
+    //     console.log(err)
+    //   })
   res.json({ statuts: 'TASKS UPDATED' })
 })
 
 server.delete('/api/v1/tasks/:category/:id', async (req, res) => {
   const { category, id } = req.params
-    await readFile(`${__dirname}/data/${category}.json`, { encoding: 'utf8' })
-      .then((text) => {
-        const delTask = "_isDeleted"
-        const delAt = '_deletedAt'
-        const tasksOut = JSON.parse(text)
-        const newTasks = tasksOut.map((item) =>
-          item.taskId === `${id}` ? { ...item, [delTask]: true, [delAt]: +new Date() } : item
-        )
-        writeFile(`${__dirname}/data/${category}.json`, JSON.stringify(newTasks), {
-          encoding: 'utf8'
-        })
-      })
-      .catch((err) => {
-        console.log(err)
-      })
+  try {
+    await Task.findOneAndUpdate({ taskId: { $eq: id } }, { $set: { _isDeleted: true, _deletedAt: +new Date() } })
+  } catch (err) {
+    console.log(err)
+  }
+    // await readFile(`${__dirname}/data/${category}.json`, { encoding: 'utf8' })
+    //   .then((text) => {
+    //     const delTask = "_isDeleted"
+    //     const delAt = '_deletedAt'
+    //     const tasksOut = JSON.parse(text)
+    //     const newTasks = tasksOut.map((item) =>
+    //       item.taskId === `${id}` ? { ...item, [delTask]: true, [delAt]: +new Date() } : item
+    //     )
+    //     writeFile(`${__dirname}/data/${category}.json`, JSON.stringify(newTasks), {
+    //       encoding: 'utf8'
+    //     })
+    //   })
+    //   .catch((err) => {
+    //     console.log(err)
+    //   })
 
   res.json({ statuts: 'TASKS UPDATED' })
   })
